@@ -11,6 +11,12 @@ $(function() {
   var vids = [eat];
   var $vids = [$eat];
 
+  /** THREE JS CODES */
+
+  var threeD = require('./3d');
+
+  /** BACK TO MEDIA */
+
   var numMedia = vids.length; // number of things to load
   var mediasReady = 0;
 

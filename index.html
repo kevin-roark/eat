@@ -19,8 +19,16 @@
 <body>
     <script src="js/lib/three.min.js"></script>
 
+    <script src="http://threejs.org/examples/js/shaders/ConvolutionShader.js"></script>
+		<script src="http://threejs.org/examples/js/shaders/CopyShader.js"></script>
+		<script src="http://threejs.org/examples/js/postprocessing/EffectComposer.js"></script>
+		<script src="http://threejs.org/examples/js/postprocessing/RenderPass.js"></script>
+		<script src="http://threejs.org/examples/js/postprocessing/MaskPass.js"></script>
+		<script src="http://threejs.org/examples/js/postprocessing/BloomPass.js"></script>
+		<script src="http://threejs.org/examples/js/postprocessing/ShaderPass.js"></script>
+
     <div class="debug-timer"></div>
-    
+
     <div class="vid-wrapper">
       <video id="eat" preload>
         <source src="media/eat.mp4" type="video/mp4" />
@@ -30,6 +38,10 @@
     <!--audio id="audio" preload>
       <source src="media/eat.mp3" type="audio/mpeg" />
     </audio-->
+    <video id="eat3d" preload autoplay loop>
+      <source src="media/eat.mp4" type="video/mp4" />
+      <source src="media/eat.webm" type"video/webm" />
+    </video>
 
     <div class="footer">
         <a href="http://www.mistershane.com" target="_blank">Mister Shane</a>
