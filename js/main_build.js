@@ -5,29 +5,17 @@ var Monolith = require('./monolith');
 
 var container;
 
-var camera, scene, renderer, light;
-
-var eat3d;
-
-var composer;
+var camera, scene, renderer, light, composer;
 
 var mouseX = 0;
 var mouseY = 0;
-
 var windowHalfX = window.innerWidth / 2;
 var windowHalfY = window.innerHeight / 2;
 
-var xgrid = 30;
-var ygrid = 30;
-var xsize = 640 / xgrid;
-var ysize = 360 / ygrid;
-function zsize() {
-  return kt.randInt(40, 20);
-}
-
-var velocity = 0.012; // originally 0.001;
-var pauseCount = 200; // originally 200
-var cycleCount = 300; // originally 1000
+var eat3d;
+var velocity = 0.015; // originally 0.001;
+var pauseCount = 450; // originally 200
+var cycleCount = 500; // originally 1000
 
 if (init());
   animate();
@@ -61,18 +49,15 @@ function init() {
     ygrid: 30,
     xsize: 640 / 30,
     ysize: 360 / 30,
-    velocity: 0.012
+    velocity: velocity
   }, renderer, scene);
   eat3d.addTo(scene);
-
-  document.addEventListener('mousemove', onDocumentMouseMove, false);
+  eat3d.resetColors();
 
   // postprocessing
-
   var renderModel = new THREE.RenderPass(scene, camera);
-  var effectBloom = new THREE.BloomPass(1.3);
+  var effectBloom = new THREE.BloomPass(0.9, 30);
   var effectCopy = new THREE.ShaderPass(THREE.CopyShader);
-
   effectCopy.renderToScreen = true;
 
   composer = new THREE.EffectComposer(renderer);
@@ -80,6 +65,7 @@ function init() {
   composer.addPass(effectBloom);
   composer.addPass(effectCopy);
 
+  document.addEventListener('mousemove', onDocumentMouseMove, false);
   window.addEventListener('resize', onWindowResize, false);
 
   return true;
@@ -105,6 +91,7 @@ function animate() {
 }
 
 var counter = 1;
+var mode = 'rapid';
 
 function render() {
   var time = Date.now() * 0.00005;
@@ -112,6 +99,16 @@ function render() {
   camera.position.x += (mouseX - camera.position.x) * 0.05;
   camera.position.y += (-mouseY - camera.position.y) * 0.05;
   camera.lookAt(scene.position);
+
+  if (counter >= cycleCount * 2) {
+    if (mode == 'rapid') {
+      cycleCount = kt.randInt(30, 10);
+      pauseCount = Math.round(cycleCount / 3);
+      eat3d.setVelocity();
+      eat3d.setColors();
+    }
+    counter = 0;
+  }
 
   if (counter % cycleCount > pauseCount) {
     eat3d.mode = 'moving';
@@ -930,6 +927,14 @@ Monolith.prototype.reverseDirection = function() {
   }
 }
 
+Monolith.prototype.doubleVelocity = function() {
+  for (i = 0; i < this.cube_count; i++) {
+    mesh = this.meshes[i];
+    mesh.dx *= 2;
+    mesh.dy *= 2;
+  }
+}
+
 Monolith.prototype.setColors = function(ordered) {
   for (var i = 0; i < this.xgrid; i++) {
     for (var j = 0; j < this.ygrid; j++) {
@@ -947,6 +952,16 @@ Monolith.prototype.setColors = function(ordered) {
       }
 
       mesh.material.color.setHSL(mesh.material.hue, mesh.material.saturation, mesh.material.lightness);
+    }
+  }
+}
+
+Monolith.prototype.resetColors = function() {
+  for (var i = 0; i < this.xgrid; i++) {
+    for (var j = 0; j < this.ygrid; j++) {
+      var idx = (i * this.xgrid) + j;
+      var mesh = this.meshes[idx];
+      mesh.material.color = new THREE.Color(0xffffff);
     }
   }
 }

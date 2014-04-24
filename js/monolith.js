@@ -100,6 +100,14 @@ Monolith.prototype.reverseDirection = function() {
   }
 }
 
+Monolith.prototype.doubleVelocity = function() {
+  for (i = 0; i < this.cube_count; i++) {
+    mesh = this.meshes[i];
+    mesh.dx *= 2;
+    mesh.dy *= 2;
+  }
+}
+
 Monolith.prototype.setColors = function(ordered) {
   for (var i = 0; i < this.xgrid; i++) {
     for (var j = 0; j < this.ygrid; j++) {
@@ -117,6 +125,16 @@ Monolith.prototype.setColors = function(ordered) {
       }
 
       mesh.material.color.setHSL(mesh.material.hue, mesh.material.saturation, mesh.material.lightness);
+    }
+  }
+}
+
+Monolith.prototype.resetColors = function() {
+  for (var i = 0; i < this.xgrid; i++) {
+    for (var j = 0; j < this.ygrid; j++) {
+      var idx = (i * this.xgrid) + j;
+      var mesh = this.meshes[idx];
+      mesh.material.color = new THREE.Color(0xffffff);
     }
   }
 }
