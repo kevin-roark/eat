@@ -1,0 +1,64 @@
+html, button, input, select, textarea,
+.pure-g [class *= "pure-u"],
+.pure-g-r [class *= "pure-u"] {
+    /* Set your content font stack here: */
+    font-family: Helvetica, sans-serif;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+body {
+    font-family: Helvetica, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: #000;
+}
+
+.video-wrapper {
+
+}
+
+#eat {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  display: none;
+}
+
+.debug-timer {
+  position: absolute;
+  left: 30px;
+  top: 40px;
+  z-index: 1000;
+  font-size: 44px;
+}
+
+.footer {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  z-index: 2;
+  padding: 1em 0em;
+  background-color: rgb(30, 30, 30);
+  color: #efefef;
+  text-align: center;
+  font-size: 100%;
+}
+   .footer a {
+        color: rgba(240, 60, 60, 0.9);
+        text-decoration: none;
+    }
+         .footer  a:hover, footer a:focus {
+            color: rgba(255, 80, 80, 1.0);
+        }
