@@ -40,7 +40,7 @@ $(function() {
 
     //audio.play();
 
-    startVids();
+    //startVids();
 
     setTimeout(hideFooter, 1000);
     setTimeout(endgame, AUDIO_LENGTH);

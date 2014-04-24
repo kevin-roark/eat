@@ -1,10 +1,13 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+
+var kt = require('./lib/kutility');
+var Monolith = require('./monolith');
+
 var container;
 
-var camera, scene, renderer;
+var camera, scene, renderer, light;
 
-var eat3d, $eat3d;
-var vidTexture, material, mesh;
+var eat3d;
 
 var composer;
 
@@ -14,12 +17,17 @@ var mouseY = 0;
 var windowHalfX = window.innerWidth / 2;
 var windowHalfY = window.innerHeight / 2;
 
-var cube_count;
-var meshes = [];
-var materials = [];
+var xgrid = 30;
+var ygrid = 30;
+var xsize = 640 / xgrid;
+var ysize = 360 / ygrid;
+function zsize() {
+  return kt.randInt(40, 20);
+}
 
-var xgrid = 20;
-var ygrid = 10;
+var velocity = 0.012; // originally 0.001;
+var pauseCount = 200; // originally 200
+var cycleCount = 300; // originally 1000
 
 if (init());
   animate();
@@ -30,11 +38,11 @@ function init() {
   document.body.appendChild(container);
 
   camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
-  camera.position.z = 500;
+  camera.position.z = 600;
 
   scene = new THREE.Scene();
 
-  var light = new THREE.DirectionalLight(0xffffff); // a lil white light
+  light = new THREE.DirectionalLight(0xffffff); // a lil white light
   light.position.set(0.5, 1, 1).normalize();
   scene.add(light);
 
@@ -45,68 +53,17 @@ function init() {
     return false;
   }
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.autoClear = false;
   container.appendChild(renderer.domElement);
 
-  eat3d = document.getElementById('eat3d');
-  $eat3d = $(eat3d);
-
-  vidTexture = new THREE.Texture(eat3d); // texture that comes from the video wait wut
-  vidTexture.minFilter = THREE.LinearFilter;
-  vidTexture.magFilter = THREE.LinearFilter;
-  vidTexture.format = THREE.RGBFormat;
-  vidTexture.generateMipmaps = false;
-
-  var i, j;
-  var ux, uy;
-  var ox, oy;
-  var geometry;
-  var xsize, ysize;
-
-  ux = 1 / xgrid;
-  uy = 1 / ygrid;
-
-  xsize = eat3d.videoWidth / xgrid;
-  ysize = eat3d.videoHeight / ygrid;
-
-  var materialParams = {color: 0xffffff, map: vidTexture};
-  var material_base = new THREE.MeshLambertMaterial(materialParams);
-
-  renderer.initMaterial(material_base, scene.__lights, scene.fog);
-
-  cube_count = 0;
-
-  for (i = 0; i < xgrid; i++) {
-    for (j = 0; j < ygrid; j++) {
-      ox = i;
-      oy = j;
-
-      geometry = new THREE.BoxGeometry(xsize, ysize, xsize);
-      change_uvs(geometry, ux, uy, ox, oy);
-
-      materials[cube_count] = new THREE.MeshLambertMaterial(materialParams);
-      material = materials[cube_count];
-      material.hue = i / xgrid;
-      material.saturation = 1 - j / ygrid;
-      material.color.setHSL(material.hue, material.saturation, 0.5);
-
-      mesh = new THREE.Mesh(geometry, material);
-      mesh.position.x = ( i - xgrid / 2 ) * xsize;
-      mesh.position.y = ( j - ygrid / 2 ) * ysize;
-      mesh.position.z = 0;
-      mesh.scale.x = 1;
-      mesh.scale.y = 1;
-      mesh.scale.z = 1;
-      scene.add(mesh);
-
-      mesh.dx = 0.001 * (0.5 - Math.random());
-      mesh.dy = 0.001 * (0.5 - Math.random());
-      meshes[cube_count] = mesh;
-
-      cube_count += 1;
-    }
-  }
-
-  renderer.autoClear = false;
+  eat3d = new Monolith('eat3d', {
+    xgrid: 30,
+    ygrid: 30,
+    xsize: 640 / 30,
+    ysize: 360 / 30,
+    velocity: 0.012
+  }, renderer, scene);
+  eat3d.addTo(scene);
 
   document.addEventListener('mousemove', onDocumentMouseMove, false);
 
@@ -137,33 +94,17 @@ function onWindowResize() {
   composer.reset();
 }
 
-function change_uvs(geometry, unitx, unity, offsetx, offsety) {
-  var faceVertexUvs = geometry.faceVertexUvs[0];
-
-  for (var i = 0; i < faceVertexUvs.length; i++) {
-    var uvs = faceVertexUvs[i];
-    for (var j = 0; j < uvs.length; j++) {
-      var uv = uvs[j];
-      uv.x = (uv.x + offsetx) * unitx;
-      uv.y = (uv.y + offsety) * unity;
-    }
-  }
-}
-
-
 function onDocumentMouseMove(event) {
-  mouseX = (event.clientX - windowHalfX);
-  mouseY = (event.clientY - windowHalfY) * 0.3;
+  mouseX = event.clientX - windowHalfX;
+  mouseY = (event.clientY - windowHalfY) * 0.6;
 }
-
-//
 
 function animate() {
   setTimeout(animate, 20);
   render();
 }
 
-var h, counter = 1;
+var counter = 1;
 
 function render() {
   var time = Date.now() * 0.00005;
@@ -172,45 +113,24 @@ function render() {
   camera.position.y += (-mouseY - camera.position.y) * 0.05;
   camera.lookAt(scene.position);
 
-  if (eat3d.readyState === eat3d.HAVE_ENOUGH_DATA) {
-    if (vidTexture)
-      vidTexture.needsUpdate = true;
+  if (counter % cycleCount > pauseCount) {
+    eat3d.mode = 'moving';
+  } else {
+    eat3d.mode = 'still';
   }
 
-  for (var i = 0; i < cube_count; i++) {
-    material = materials[i];
-    h = ( 360 * ( material.hue + time ) % 360 ) / 360;
-    material.color.setHSL( h, material.saturation, 0.5 );
+  if (counter % cycleCount === 0) {
+    eat3d.reverseDirection();
   }
 
-  if (counter % 1000 > 200) {
-    for (var i = 0; i < cube_count; i++) {
-      mesh = meshes[i];
-      mesh.rotation.x += 10 * mesh.dx;
-      mesh.rotation.y += 10 * mesh.dy;
-
-      mesh.position.x += 200 * mesh.dx;
-      mesh.position.y += 200 * mesh.dy;
-      mesh.position.z += 400 * mesh.dx;
-    }
-  }
-
-  if (counter % 1000 === 0) {
-    for (i = 0; i < cube_count; i ++) {
-      mesh = meshes[i];
-      mesh.dx *= -1;
-      mesh.dy *= -1;
-    }
-  }
+  eat3d.render();
 
   counter++;
-
-  //renderer.clear();
+  renderer.clear();
   composer.render();
-  console.log('r');
 }
 
-},{}],2:[function(require,module,exports){
+},{"./lib/kutility":2,"./monolith":4}],2:[function(require,module,exports){
 /* export something */
 module.exports = new Kutility;
 
@@ -828,7 +748,7 @@ $(function() {
 
     //audio.play();
 
-    startVids();
+    //startVids();
 
     setTimeout(hideFooter, 1000);
     setTimeout(endgame, AUDIO_LENGTH);
@@ -907,4 +827,173 @@ $(function() {
 
 });
 
-},{"./3d":1,"./lib/kutility":2}]},{},[3])
+},{"./3d":1,"./lib/kutility":2}],4:[function(require,module,exports){
+var kt = require('./lib/kutility');
+
+module.exports = Monolith;
+
+// name, num x, num y, size x, size y, size z, ...
+function Monolith(vid, options, renderer, scene) {
+
+  this.xgrid = options.xgrid || 30;
+  this.ygrid = options.ygrid || 30;
+  this.xsize = options.xsize || 21;
+  this.ysize = options.ysize || 15;
+  this.zsize = options.zsize || this.xsize;
+  this.velocity = options.velocity || 0.01;
+  this.mode = options.mode || '';
+
+  this.video = document.getElementById(vid);
+  this.$video = $(this.video);
+  this.video.muted = true;
+
+  this.materials = [];
+  this.meshes = [];
+
+  this.vidTexture = new THREE.Texture(this.video);
+  this.vidTexture.minFilter = THREE.LinearFilter;
+  this.vidTexture.magFilter = THREE.LinearFilter;
+  this.vidTexture.format = THREE.RGBFormat;
+  this.vidTexture.generateMipmaps = false;
+
+  this.ux = 1 / this.xgrid;
+  this.uy = 1 / this.ygrid;
+
+  this.materialParams = {color: 0xffffff, map: this.vidTexture};
+  this.material_base = new THREE.MeshLambertMaterial(this.materialParams);
+
+  renderer.initMaterial(this.material_base, scene.__lights, scene.fog);
+
+  this.cube_count = 0;
+
+  var i, j;
+  var ox, oy;
+  var geometry;
+
+  for (i = 0; i < this.xgrid; i++) {
+    for (j = 0; j < this.ygrid; j++) {
+      ox = i;
+      oy = j;
+
+      geometry = new THREE.BoxGeometry(this.xsize, this.ysize, this.zsize);
+
+      // THIS IS WHAT BREAKS DOWN VIDEO INTO PARTS
+      change_uvs(geometry, this.ux, this.uy, ox, oy);
+
+      this.materials[this.cube_count] = new THREE.MeshLambertMaterial(this.materialParams);
+      material = this.materials[this.cube_count];
+
+      mesh = new THREE.Mesh(geometry, material);
+      //scene.add(mesh);
+      this.meshes[this.cube_count] = mesh;
+
+      this.cube_count += 1;
+    }
+  }
+
+  //this.setColors(true);
+  this.setVelocity();
+  this.resetMeshes(true, true);
+}
+
+Monolith.prototype.addTo = function(scene) {
+  for (var i = 0; i < this.cube_count; i++) {
+    scene.add(this.meshes[i]);
+  }
+}
+
+Monolith.prototype.render = function() {
+  if (this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
+    if (this.vidTexture)
+      this.vidTexture.needsUpdate = true;
+  }
+
+  if (this.mode == 'moving') {
+    for (var i = 0; i < this.cube_count; i++) {
+      mesh = this.meshes[i];
+
+      mesh.rotation.x += 10 * mesh.dx;
+      mesh.rotation.y += 10 * mesh.dy;
+
+      mesh.position.x += 200 * mesh.dx;
+      mesh.position.y += 200 * mesh.dy;
+      mesh.position.z += 400 * mesh.dx;
+    }
+  }
+}
+
+Monolith.prototype.reverseDirection = function() {
+  for (i = 0; i < this.cube_count; i++) {
+    mesh = this.meshes[i];
+    mesh.dx *= -1;
+    mesh.dy *= -1;
+  }
+}
+
+Monolith.prototype.setColors = function(ordered) {
+  for (var i = 0; i < this.xgrid; i++) {
+    for (var j = 0; j < this.ygrid; j++) {
+      var idx = (i * this.xgrid) + j;
+      var mesh = this.meshes[idx];
+
+      if (ordered) {
+        mesh.material.hue = i / this.xgrid;
+        mesh.material.saturation = 1 - j / this.ygrid;
+        mesh.material.lightness = 0.5;
+      } else {
+        mesh.material.hue = Math.random();
+        mesh.material.saturation = (Math.random() * 0.5) + 0.1; // don't want too much saturation
+        mesh.material.lightness = (Math.random() * 0.5) + 0.25; // 0.25 -> 0.75
+      }
+
+      mesh.material.color.setHSL(mesh.material.hue, mesh.material.saturation, mesh.material.lightness);
+    }
+  }
+}
+
+Monolith.prototype.setVelocity = function() {
+  for (var i = 0; i < this.xgrid; i++) {
+    for (var j = 0; j < this.ygrid; j++) {
+      var idx = (i * this.xgrid) + j;
+      var mesh = this.meshes[idx];
+      mesh.dx = this.velocity * (0.5 - Math.random());
+      mesh.dy = this.velocity * (0.5 - Math.random());
+    }
+  }
+}
+
+Monolith.prototype.resetMeshes = function(pos, scale) {
+  for (var i = 0; i < this.xgrid; i++) {
+    for (var j = 0; j < this.ygrid; j++) {
+      var idx = (i * this.xgrid) + j;
+      var mesh = this.meshes[idx];
+
+      if (pos) {
+        mesh.position.x = ( i - this.xgrid / 2 ) * this.xsize;
+        mesh.position.y = ( j - this.ygrid / 2 ) * this.ysize;
+        mesh.position.z = 0;
+      }
+
+      if (scale) {
+        mesh.scale.x = 1;
+        mesh.scale.y = 1;
+        mesh.scale.z = 1;
+      }
+    }
+  }
+}
+
+function change_uvs(geometry, unitx, unity, offsetx, offsety) {
+  var faceVertexUvs = geometry.faceVertexUvs[0];
+
+  for (var i = 0; i < faceVertexUvs.length; i++) {
+    var uvs = faceVertexUvs[i];
+    for (var j = 0; j < uvs.length; j++) {
+      var uv = uvs[j];
+      uv.x = (uv.x + offsetx) * unitx;
+      uv.y = (uv.y + offsety) * unity;
+    }
+  }
+}
+
+},{"./lib/kutility":2}]},{},[3])
