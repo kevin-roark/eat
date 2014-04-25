@@ -2,6 +2,7 @@
 
 var kt = require('./lib/kutility');
 var Monolith = require('./monolith');
+var mover = require('./mover');
 
 var container;
 
@@ -13,9 +14,24 @@ var windowHalfX = window.innerWidth / 2;
 var windowHalfY = window.innerHeight / 2;
 
 var eat3d;
+var stranger1;
+var strangers = [];
+var onslaught = [];
+
 var velocity = 0.015; // originally 0.001;
-var pauseCount = 450; // originally 200
-var cycleCount = 500; // originally 1000
+
+var START_DECAY = 13666;
+var STRANGER_1 = 26666;
+var STRANGER_2 = 36666;
+var ONSLAUGHT = 65000;
+var BREAKDOWN = 100000;
+
+var active = {
+  eat3d: false,
+  stranger1: false,
+  stranger2: false
+};
+var breakdownInterval;
 
 if (init());
   animate();
@@ -45,14 +61,42 @@ function init() {
   container.appendChild(renderer.domElement);
 
   eat3d = new Monolith('eat3d', {
-    xgrid: 30,
-    ygrid: 30,
-    xsize: 640 / 30,
-    ysize: 360 / 30,
-    velocity: velocity
+    xgrid: 21,
+    ygrid: 21,
+    width: 640,
+    height: 360,
+    velocity: velocity,
+    mode: 'still'
   }, renderer, scene);
   eat3d.addTo(scene);
-  eat3d.resetColors();
+
+  stranger1 = new Monolith('eat3d', {
+    xgrid: 15,
+    ygrid: 15,
+    width: 300,
+    height: 200,
+    velocity: 0.02,
+    initX: 200,
+    initY: 0,
+    initZ: 60,
+    randZ: true,
+    zsize: 30,
+    mode: 'still'
+  }, renderer, scene);
+
+  stranger2 = new Monolith('eat3d', {
+    xgrid: 16,
+    ygrid: 16,
+    width: 150,
+    height: 150,
+    breakDown: true,
+    velocity: 0.03,
+    randVel: true,
+    initX: -250,
+    initY: -50,
+    initZ: 20,
+    zsize: 60
+  }, renderer, scene);
 
   // postprocessing
   var renderModel = new THREE.RenderPass(scene, camera);
@@ -67,6 +111,12 @@ function init() {
 
   document.addEventListener('mousemove', onDocumentMouseMove, false);
   window.addEventListener('resize', onWindowResize, false);
+
+  setTimeout(startDecay, START_DECAY);
+  setTimeout(addStranger1, STRANGER_1);
+  setTimeout(addStranger2, STRANGER_2);
+  setTimeout(performOnslaught, ONSLAUGHT);
+  setTimeout(breakdown, BREAKDOWN)
 
   return true;
 }
@@ -90,44 +140,216 @@ function animate() {
   render();
 }
 
-var counter = 1;
-var mode = 'rapid';
+// break down a video, then bring it back together, then callback
+function deconstruct(monolith, maxT, diffSpeeds, callback) {
+  var t = kt.randInt(maxT, 50);
+  monolith.setVelocity();
+  monolith.mode = 'moving';
+  setTimeout(function() {
+    monolith.reverseDirection();
+
+    if (!diffSpeeds)
+      var t2 = t;
+    else {
+      var t2 = kt.randInt(maxT, 50);
+      var diff = t / t2;
+      monolith.speedChange(diff);
+    }
+
+    setTimeout(function() {
+      monolith.mode = 'still';
+      callback();
+    }, t2);
+
+  }, t);
+}
+
+function moveMonolith(mono, callback) {
+  var x = (Math.random() * 2000) - 1000;
+  var y = (Math.random() * 2000) - 1000;
+  var z = (Math.random() * 500) - 400;
+
+  mover.move(mono, x, y, z, false, function() {
+    callback();
+  });
+}
+
+function startDecay() {
+
+  function decomposeEat() {
+    deconstruct(eat3d, 1200, true, function() {
+      eat3d.resetMeshes(true, false);
+      if (active.eat3d) {
+        setTimeout(decomposeEat, kt.randInt(1500));
+      }
+    });
+  }
+
+  active.eat3d = true;
+  decomposeEat();
+}
+
+function addStranger1() {
+  stranger1.addTo(scene);
+  strangers.push(stranger1);
+  active.stranger1 = true;
+
+  var decomposing = false;
+  var colored = false;
+
+  function makeStrange() {
+    var p = Math.random();
+    if (p < 0.3 && !decomposing) {
+      decomposing = true;
+      deconstruct(stranger1, 3000, true, function() {
+        decomposing = false;
+      });
+    }
+
+    if (!colored && p < 0.65) {
+      stranger1.setColors();
+      colored = true;
+    } else if (colored) {
+      stranger1.resetColors();
+      colored = false;
+    }
+
+    /*if (active.stranger1)*/ setTimeout(makeStrange, kt.randInt(1000, 200));
+  }
+
+  function moveit() {
+    moveMonolith(stranger1, function() {
+      //stranger1.resetMeshes(true, false);
+      setTimeout(function() {
+        if (active.stranger1) setTimeout(moveit, 1);
+      }, kt.randInt(7000, 1000));
+    });
+  }
+
+  makeStrange();
+  setTimeout(function() {
+    moveit();
+  }, 5000);
+
+  stranger1.interval = setInterval(function() {
+    stranger1.resetMeshes(true, false);
+  }, 12000);
+}
+
+function addStranger2() {
+  active.stranger2 = true;
+  stranger2.addTo(scene);
+  strangers.push(stranger2);
+  stranger2.mode = 'moving';
+
+  function colorize() {
+    stranger2.resetColor(kt.randColor());
+    if (active.stranger2) setTimeout(colorize, kt.randInt(8000, 1000));
+  }
+
+  stranger2.interval = setInterval(function() {
+    stranger2.resetMeshes(true, false);
+  }, 10000);
+}
+
+function performOnslaught() {
+  active.onslaught = true;
+  doIt();
+
+  function doIt() {
+    var w = kt.randInt(120, 40);
+    var h = kt.randInt(90, 30);
+    var g = kt.randInt(7, 2);
+    var bd = (Math.random() < 0.5)? true : false;
+    var os = new Monolith('eat3d', {
+      xgrid: g,
+      ygrid: g,
+      width: w,
+      height: h,
+      breakDown: bd,
+      velocity: Math.random() * 0.01 + 0.004,
+      randVel: true,
+      mode: 'moving',
+      initX: (Math.random() * 700) - 350,
+      initY: (Math.random() * 300) - 150,
+      initZ: (Math.random() * 50) + 10,
+      zsize: w
+    }, renderer, scene);
+
+    os.addTo(scene);
+    onslaught.push(os);
+
+    if (active.onslaught) setTimeout(doIt, kt.randInt(7000, 2500));
+  }
+}
+
+function breakdown() {
+
+  for (var key in active) {
+    active[key] = false;
+  }
+  active.eat3d = true;
+  active.onslaught = true;
+
+  function bobulate(mono) {
+    mono.randVel = false;
+    mono.setVelocity();
+  }
+
+  for (var i = 0; i < strangers.length; i++) {
+    bobulate(strangers[i]);
+    clearInterval(strangers[i].interval);
+    strangers[i].mode = 'moving';
+  }
+
+  for (var i = 0; i < onslaught.length; i++) {
+    bobulate(onslaught[i]);
+  }
+
+  function flash() {
+    renderer.setClearColor(0xffffff);
+    setTimeout(function() {
+      renderer.setClearColor(0x000000);
+      setTimeout(flash, kt.randInt(300, 30));
+    }, kt.randInt(300, 30));
+  }
+
+  flash();
+
+  breakdownInterval = setInterval(function() {
+    for (var i = 0; i < strangers.length; i++) {
+      strangers[i].resetMeshes(true, false);
+      strangers[i].mode = 'moving';
+      bobulate(strangers[i]);
+    }
+
+    for (var i = 0; i < onslaught.length; i++) {
+      onslaught[i].resetMeshes(true, false);
+      bobulate(onslaught[i]);
+    }
+  }, 15000);
+}
 
 function render() {
-  var time = Date.now() * 0.00005;
-
   camera.position.x += (mouseX - camera.position.x) * 0.05;
   camera.position.y += (-mouseY - camera.position.y) * 0.05;
   camera.lookAt(scene.position);
 
-  if (counter >= cycleCount * 2) {
-    if (mode == 'rapid') {
-      cycleCount = kt.randInt(30, 10);
-      pauseCount = Math.round(cycleCount / 3);
-      eat3d.setVelocity();
-      eat3d.setColors();
-    }
-    counter = 0;
-  }
-
-  if (counter % cycleCount > pauseCount) {
-    eat3d.mode = 'moving';
-  } else {
-    eat3d.mode = 'still';
-  }
-
-  if (counter % cycleCount === 0) {
-    eat3d.reverseDirection();
-  }
-
   eat3d.render();
 
-  counter++;
+  for (var i = 0; i < strangers.length; i++) {
+    strangers[i].render();
+  }
+
+  for (var i = 0; i < onslaught.length; i++) {
+    onslaught[i].render();
+  }
+
   renderer.clear();
   composer.render();
 }
 
-},{"./lib/kutility":2,"./monolith":4}],2:[function(require,module,exports){
+},{"./lib/kutility":2,"./monolith":4,"./mover":5}],2:[function(require,module,exports){
 /* export something */
 module.exports = new Kutility;
 
@@ -834,11 +1056,23 @@ function Monolith(vid, options, renderer, scene) {
 
   this.xgrid = options.xgrid || 30;
   this.ygrid = options.ygrid || 30;
-  this.xsize = options.xsize || 21;
-  this.ysize = options.ysize || 15;
+  this.width = options.width || 640;
+  this.height = options.height || 360;
+  this.xsize = this.width / this.xgrid;
+  this.ysize = this.height / this.ygrid;
+  this.randZ = options.randZ || false;
   this.zsize = options.zsize || this.xsize;
   this.velocity = options.velocity || 0.01;
+  this.randVel = options.randVel || false;
   this.mode = options.mode || '';
+  this.breakDown = options.breakDown;
+  if (this.breakDown === undefined) this.breakDown = true;
+  this.initX = options.initX || 0;
+  this.initY = options.initY || 0;
+  this.initZ = options.initZ || 0;
+  this.gdx = options.gdx || 0;
+  this.gdy = options.gdy || 0;
+  this.gdz = options.gdz || 0;
 
   this.video = document.getElementById(vid);
   this.$video = $(this.video);
@@ -872,16 +1106,16 @@ function Monolith(vid, options, renderer, scene) {
       ox = i;
       oy = j;
 
-      geometry = new THREE.BoxGeometry(this.xsize, this.ysize, this.zsize);
+      geometry = new THREE.BoxGeometry(this.xsize, this.ysize, this.z());
 
       // THIS IS WHAT BREAKS DOWN VIDEO INTO PARTS
-      change_uvs(geometry, this.ux, this.uy, ox, oy);
+      if (this.breakDown)
+        change_uvs(geometry, this.ux, this.uy, ox, oy);
 
       this.materials[this.cube_count] = new THREE.MeshLambertMaterial(this.materialParams);
       material = this.materials[this.cube_count];
 
       mesh = new THREE.Mesh(geometry, material);
-      //scene.add(mesh);
       this.meshes[this.cube_count] = mesh;
 
       this.cube_count += 1;
@@ -891,6 +1125,13 @@ function Monolith(vid, options, renderer, scene) {
   //this.setColors(true);
   this.setVelocity();
   this.resetMeshes(true, true);
+}
+
+Monolith.prototype.z = function() {
+  if (!this.randZ)
+    return this.zsize;
+
+  return (Math.random() * this.zsize * 1.5) + (this.zsize * 0.5);
 }
 
 Monolith.prototype.addTo = function(scene) {
@@ -905,16 +1146,29 @@ Monolith.prototype.render = function() {
       this.vidTexture.needsUpdate = true;
   }
 
-  if (this.mode == 'moving') {
-    for (var i = 0; i < this.cube_count; i++) {
-      mesh = this.meshes[i];
+  var micro = false;
+  if (this.mode == 'moving')
+    micro = true;
 
+  for (var i = 0; i < this.cube_count; i++) {
+    mesh = this.meshes[i];
+
+    mesh.position.x += this.gdx;
+    mesh.position.y += this.gdy;
+    mesh.position.z += this.gdz;
+
+    if (micro && !this.randVel) {
       mesh.rotation.x += 10 * mesh.dx;
       mesh.rotation.y += 10 * mesh.dy;
-
       mesh.position.x += 200 * mesh.dx;
       mesh.position.y += 200 * mesh.dy;
       mesh.position.z += 400 * mesh.dx;
+    } else if (micro) {
+      mesh.rotation.x += (10 * mesh.dx) * (Math.random() - 0.5);
+      mesh.rotation.y += 10 * mesh.dy * (Math.random() - 0.5);
+      mesh.position.x += 200 * mesh.dx * (Math.random() - 0.5);
+      mesh.position.y += 200 * mesh.dy * (Math.random() - 0.5);
+      mesh.position.z += 400 * mesh.dx * (Math.random() - 0.5);
     }
   }
 }
@@ -927,11 +1181,19 @@ Monolith.prototype.reverseDirection = function() {
   }
 }
 
-Monolith.prototype.doubleVelocity = function() {
+Monolith.prototype.speedChange = function(rate) {
   for (i = 0; i < this.cube_count; i++) {
     mesh = this.meshes[i];
-    mesh.dx *= 2;
-    mesh.dy *= 2;
+    mesh.dx *= rate;
+    mesh.dy *= rate;
+  }
+}
+
+Monolith.prototype.setVelocity = function() {
+  for (var i = 0; i < this.cube_count; i++) {
+    var mesh = this.meshes[i];
+    mesh.dx = this.velocity * (0.5 - Math.random());
+    mesh.dy = this.velocity * (0.5 - Math.random());
   }
 }
 
@@ -940,6 +1202,8 @@ Monolith.prototype.setColors = function(ordered) {
     for (var j = 0; j < this.ygrid; j++) {
       var idx = (i * this.xgrid) + j;
       var mesh = this.meshes[idx];
+
+      if (!mesh) continue;
 
       if (ordered) {
         mesh.material.hue = i / this.xgrid;
@@ -956,25 +1220,20 @@ Monolith.prototype.setColors = function(ordered) {
   }
 }
 
-Monolith.prototype.resetColors = function() {
-  for (var i = 0; i < this.xgrid; i++) {
-    for (var j = 0; j < this.ygrid; j++) {
-      var idx = (i * this.xgrid) + j;
-      var mesh = this.meshes[idx];
+Monolith.prototype.resetColors = function(color) {
+  for (var i = 0; i < this.cube_count; i++) {
+    var mesh = this.meshes[i];
+    if (!color)
       mesh.material.color = new THREE.Color(0xffffff);
-    }
+    else
+      mesh.material.color = new THREE.Color(color);
   }
 }
 
-Monolith.prototype.setVelocity = function() {
-  for (var i = 0; i < this.xgrid; i++) {
-    for (var j = 0; j < this.ygrid; j++) {
-      var idx = (i * this.xgrid) + j;
-      var mesh = this.meshes[idx];
-      mesh.dx = this.velocity * (0.5 - Math.random());
-      mesh.dy = this.velocity * (0.5 - Math.random());
-    }
-  }
+Monolith.prototype.structureVel = function(dx, dy, dz) {
+  this.gdx = dx;
+  this.gdy = dy;
+  this.gdz = dz;
 }
 
 Monolith.prototype.resetMeshes = function(pos, scale) {
@@ -983,10 +1242,14 @@ Monolith.prototype.resetMeshes = function(pos, scale) {
       var idx = (i * this.xgrid) + j;
       var mesh = this.meshes[idx];
 
+      if (!mesh) continue;
+
       if (pos) {
-        mesh.position.x = ( i - this.xgrid / 2 ) * this.xsize;
-        mesh.position.y = ( j - this.ygrid / 2 ) * this.ysize;
-        mesh.position.z = 0;
+        mesh.position.x = this.initX + ( i - this.xgrid / 2 ) * this.xsize;
+        mesh.position.y = this.initY + ( j - this.ygrid / 2 ) * this.ysize;
+        mesh.position.z = this.initZ;
+        mesh.rotation.x = 0;
+        mesh.rotation.y = 0;
       }
 
       if (scale) {
@@ -994,6 +1257,21 @@ Monolith.prototype.resetMeshes = function(pos, scale) {
         mesh.scale.y = 1;
         mesh.scale.z = 1;
       }
+    }
+  }
+}
+
+Monolith.prototype.scaleMeshes = function(scale) {
+  for (var i = 0; i < this.xgrid; i++) {
+    for (var j = 0; j < this.ygrid; j++) {
+      var idx = (i * this.xgrid) + j;
+      var mesh = this.meshes[idx];
+
+      if (!mesh) continue;
+
+      mesh.scale.x = scale;
+      mesh.scale.y = scale;
+      mesh.scale.z = scale;
     }
   }
 }
@@ -1009,6 +1287,33 @@ function change_uvs(geometry, unitx, unity, offsetx, offsety) {
       uv.y = (uv.y + offsety) * unity;
     }
   }
+}
+
+},{"./lib/kutility":2}],5:[function(require,module,exports){
+
+var kt = require('./lib/kutility');
+
+var frametime = module.exports.frametime = 20.0;
+
+module.exports.move = function (mono, x, y, z, rotate, callback) {
+  var length = kt.randInt(8000, 1000);
+
+  var xv = x / length * 10;
+  var yv = y / length * 10;
+  var zv = z / length * 10;
+
+  console.log(xv + ' ' +  yv + ' ' +  zv);
+
+  mono.structureVel(xv, yv, zv);
+
+  if (rotate) {
+    // do something later
+  }
+
+  setTimeout(function() {
+    mono.structureVel(0, 0, 0);
+    callback();
+  }, length);
 }
 
 },{"./lib/kutility":2}]},{},[3])
