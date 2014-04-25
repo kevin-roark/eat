@@ -40,7 +40,8 @@ $(function() {
 
     //audio.play();
 
-    //startVids();
+    threeD.init();
+    startVids();
 
     setTimeout(hideFooter, 1000);
     setTimeout(endgame, AUDIO_LENGTH);
@@ -59,6 +60,8 @@ $(function() {
       //audio.currentTime = 0;
       for (var i = 0; i < vids.length; i++)
         vids[i].currentTime = 0;
+
+      threeD.clear();
 
       for (var key in active)
         active[key] = false;
@@ -115,6 +118,14 @@ $(function() {
   function startVids() {
     active.eat = true;
     eat.play();
+
+    ghostLooper();
+  }
+
+  function ghostLooper() {
+    var o = Math.random() * 0.4 + 0.02;
+    $eat.css('opacity', o);
+    setTimeout(ghostLooper, kt.randInt(1000, 20));
   }
 
 });

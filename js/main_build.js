@@ -23,7 +23,7 @@ var velocity = 0.015; // originally 0.001;
 var START_DECAY = 13666;
 var STRANGER_1 = 26666;
 var STRANGER_2 = 36666;
-var LIGHT_SHIFT = 40000;
+var LIGHT_SHIFT = 42000;
 var ONSLAUGHT = 65000;
 var BREAKDOWN = 100000;
 
@@ -34,8 +34,12 @@ var active = {
 };
 var breakdownInterval;
 
-if (init());
-  animate();
+
+module.exports.init = init;
+
+module.exports.clear = function() {
+  scene.clear();
+}
 
 function init() {
 
@@ -61,7 +65,7 @@ function init() {
   renderer.autoClear = false;
   container.appendChild(renderer.domElement);
 
-  eat3d = new Monolith('eat3d', {
+  eat3d = new Monolith('eat', {
     xgrid: 21,
     ygrid: 21,
     width: 640,
@@ -71,12 +75,12 @@ function init() {
   }, renderer, scene);
   eat3d.addTo(scene);
 
-  stranger1 = new Monolith('eat3d', {
+  stranger1 = new Monolith('eat', {
     xgrid: 15,
     ygrid: 15,
     width: 300,
     height: 200,
-    velocity: 0.02,
+    velocity: 0.045,
     initX: 200,
     initY: 0,
     initZ: 60,
@@ -85,7 +89,7 @@ function init() {
     mode: 'still'
   }, renderer, scene);
 
-  stranger2 = new Monolith('eat3d', {
+  stranger2 = new Monolith('eat', {
     xgrid: 16,
     ygrid: 16,
     width: 150,
@@ -118,8 +122,9 @@ function init() {
   setTimeout(addStranger2, STRANGER_2);
   setTimeout(performOnslaught, ONSLAUGHT);
   setTimeout(lightShift, LIGHT_SHIFT);
-  setTimeout(breakdown, BREAKDOWN)
+  setTimeout(breakdown, BREAKDOWN);
 
+  animate();
   return true;
 }
 
@@ -167,9 +172,9 @@ function deconstruct(monolith, maxT, diffSpeeds, callback) {
 }
 
 function moveMonolith(mono, callback) {
-  var x = (Math.random() * 2000) - 1000;
-  var y = (Math.random() * 2000) - 1000;
-  var z = (Math.random() * 500) - 400;
+  var x = (Math.random() * 1000) - 500;
+  var y = (Math.random() * 800) - 400;
+  var z = (Math.random() * 400) - 200;
 
   mover.move(mono, x, y, z, false, function() {
     callback();
@@ -182,12 +187,15 @@ function startDecay() {
     deconstruct(eat3d, 1200, true, function() {
       eat3d.resetMeshes(true, false);
       if (active.eat3d) {
-        setTimeout(decomposeEat, kt.randInt(1500));
+        setTimeout(decomposeEat, kt.randInt(eat3d.maxWait, eat3d.maxWait / 3.5));
+        eat3d.maxWait = eat3d.maxWait - 150;
+        if (eat3d.maxWait < 500) eat3d.maxWait = 500;
       }
     });
   }
 
   active.eat3d = true;
+  eat3d.maxWait = 6000;
   decomposeEat();
 }
 
@@ -235,7 +243,7 @@ function addStranger1() {
 
   stranger1.interval = setInterval(function() {
     stranger1.resetMeshes(true, false);
-  }, 12000);
+  }, 17500);
 }
 
 function addStranger2() {
@@ -263,7 +271,7 @@ function performOnslaught() {
     var h = kt.randInt(90, 30);
     var g = kt.randInt(7, 2);
     var bd = (Math.random() < 0.5)? true : false;
-    var os = new Monolith('eat3d', {
+    var os = new Monolith('eat', {
       xgrid: g,
       ygrid: g,
       width: w,
@@ -281,13 +289,18 @@ function performOnslaught() {
     os.addTo(scene);
     onslaught.push(os);
 
-    if (active.onslaught) setTimeout(doIt, kt.randInt(7000, 2500));
+    if (active.onslaught && onslaught.length <= 16)
+      setTimeout(doIt, kt.randInt(6000, 1800));
   }
 }
 
 function lightShift() {
   function shift() {
-    light.color = new THREE.Color(kt.randColor());
+    var r = kt.randInt(255, 170);
+    var g = kt.randInt(255, 170);
+    var b = kt.randInt(255, 170);
+    var rgb = 'rgb(' + r + ', ' + g + ', ' + b + ')';
+    light.color = new THREE.Color(rgb);
 
     setTimeout(function() {
       light.color = new THREE.Color(0xffffff);
@@ -343,7 +356,7 @@ function breakdown() {
       onslaught[i].resetMeshes(true, false);
       bobulate(onslaught[i]);
     }
-  }, 15000);
+  }, 30000);
 }
 
 function render() {
@@ -983,7 +996,8 @@ $(function() {
 
     //audio.play();
 
-    //startVids();
+    threeD.init();
+    startVids();
 
     setTimeout(hideFooter, 1000);
     setTimeout(endgame, AUDIO_LENGTH);
@@ -1002,6 +1016,8 @@ $(function() {
       //audio.currentTime = 0;
       for (var i = 0; i < vids.length; i++)
         vids[i].currentTime = 0;
+
+      threeD.clear();
 
       for (var key in active)
         active[key] = false;
@@ -1058,6 +1074,14 @@ $(function() {
   function startVids() {
     active.eat = true;
     eat.play();
+
+    ghostLooper();
+  }
+
+  function ghostLooper() {
+    var o = Math.random() * 0.4 + 0.02;
+    $eat.css('opacity', o);
+    setTimeout(ghostLooper, kt.randInt(1000, 20));
   }
 
 });
