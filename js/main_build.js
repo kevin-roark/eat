@@ -23,6 +23,7 @@ var velocity = 0.015; // originally 0.001;
 var START_DECAY = 13666;
 var STRANGER_1 = 26666;
 var STRANGER_2 = 36666;
+var LIGHT_SHIFT = 40000;
 var ONSLAUGHT = 65000;
 var BREAKDOWN = 100000;
 
@@ -116,6 +117,7 @@ function init() {
   setTimeout(addStranger1, STRANGER_1);
   setTimeout(addStranger2, STRANGER_2);
   setTimeout(performOnslaught, ONSLAUGHT);
+  setTimeout(lightShift, LIGHT_SHIFT);
   setTimeout(breakdown, BREAKDOWN)
 
   return true;
@@ -283,13 +285,27 @@ function performOnslaught() {
   }
 }
 
-function breakdown() {
+function lightShift() {
+  function shift() {
+    light.color = new THREE.Color(kt.randColor());
 
+    setTimeout(function() {
+      light.color = new THREE.Color(0xffffff);
+      if (active.light) setTimeout(shift, kt.randInt(1000, 100));
+    }, kt.randInt(300, 60));
+  }
+
+  active.light = true;
+  shift();
+}
+
+function breakdown() {
   for (var key in active) {
     active[key] = false;
   }
   active.eat3d = true;
   active.onslaught = true;
+  active.light = true;
 
   function bobulate(mono) {
     mono.randVel = false;
@@ -1296,7 +1312,7 @@ var kt = require('./lib/kutility');
 var frametime = module.exports.frametime = 20.0;
 
 module.exports.move = function (mono, x, y, z, rotate, callback) {
-  var length = kt.randInt(8000, 1000);
+  var length = kt.randInt(3000, 700);
 
   var xv = x / length * 10;
   var yv = y / length * 10;

@@ -4,7 +4,7 @@ var kt = require('./lib/kutility');
 var frametime = module.exports.frametime = 20.0;
 
 module.exports.move = function (mono, x, y, z, rotate, callback) {
-  var length = kt.randInt(8000, 1000);
+  var length = kt.randInt(3000, 700);
 
   var xv = x / length * 10;
   var yv = y / length * 10;
