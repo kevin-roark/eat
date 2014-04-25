@@ -21,10 +21,12 @@ var velocity = 0.015; // originally 0.001;
 
 var START_DECAY = 13666;
 var STRANGER_1 = 26666;
-var STRANGER_2 = 36666;
+var STRANGER_2 = 46666;
 var LIGHT_SHIFT = 42000;
 var ONSLAUGHT = 65000;
 var BREAKDOWN = 100000;
+var SHAKING = 80000;
+var COME_HOME = 180000;
 
 var active = {
   eat3d: false,
@@ -79,7 +81,7 @@ function init() {
     ygrid: 15,
     width: 300,
     height: 200,
-    velocity: 0.045,
+    velocity: 0.05,
     initX: 200,
     initY: 0,
     initZ: 60,
@@ -122,6 +124,8 @@ function init() {
   setTimeout(performOnslaught, ONSLAUGHT);
   setTimeout(lightShift, LIGHT_SHIFT);
   setTimeout(breakdown, BREAKDOWN);
+  setTimeout(startShaking, SHAKING);
+  setTimeout(comeHome, COME_HOME);
 
   animate();
   return true;
@@ -183,18 +187,21 @@ function moveMonolith(mono, callback) {
 function startDecay() {
 
   function decomposeEat() {
-    deconstruct(eat3d, 1200, true, function() {
+    deconstruct(eat3d, eat3d.maxT, true, function() {
       eat3d.resetMeshes(true, false);
       if (active.eat3d) {
         setTimeout(decomposeEat, kt.randInt(eat3d.maxWait, eat3d.maxWait / 3.5));
         eat3d.maxWait = eat3d.maxWait - 150;
         if (eat3d.maxWait < 500) eat3d.maxWait = 500;
+        eat3d.maxT = eat3d.maxT + 100;
+        if (eat3d.maxT > 1500) eat3d.maxT = 1500;
       }
     });
   }
 
   active.eat3d = true;
   eat3d.maxWait = 6000;
+  eat3d.maxT = 300;
   decomposeEat();
 }
 
@@ -208,7 +215,7 @@ function addStranger1() {
 
   function makeStrange() {
     var p = Math.random();
-    if (p < 0.3 && !decomposing) {
+    if (p < 0.1 && !decomposing) {
       decomposing = true;
       deconstruct(stranger1, 3000, true, function() {
         decomposing = false;
@@ -238,7 +245,7 @@ function addStranger1() {
   makeStrange();
   setTimeout(function() {
     moveit();
-  }, 5000);
+  }, 12000);
 
   stranger1.interval = setInterval(function() {
     stranger1.resetMeshes(true, false);
@@ -318,6 +325,8 @@ function breakdown() {
   active.eat3d = true;
   active.onslaught = true;
   active.light = true;
+  active.shaking = true;
+  active.breakdown = true;
 
   function bobulate(mono) {
     mono.randVel = false;
@@ -345,6 +354,10 @@ function breakdown() {
   flash();
 
   breakdownInterval = setInterval(function() {
+    if (!active.breakdown) {
+      return;
+    }
+
     for (var i = 0; i < strangers.length; i++) {
       strangers[i].resetMeshes(true, false);
       strangers[i].mode = 'moving';
@@ -358,10 +371,68 @@ function breakdown() {
   }, 30000);
 }
 
+var shakeRange = {
+  x: 2,
+  y: 2,
+  z: 2
+};
+
+function startShaking() {
+  active.shaking = true;
+  setLevels();
+
+  function setLevels() {
+    shakeRange.x += 0.33;
+    shakeRange.y += 0.33;
+    shakeRange.z += 0.33;
+
+    shakeRange.x = Math.min(shakeRange.x, 30);
+    shakeRange.y = Math.min(shakeRange.y, 30);
+    shakeRange.z = Math.min(shakeRange.z, 30);
+
+    setTimeout(setLevels, kt.randInt(2000, 1000));
+  }
+
+}
+
+function shakeLevel(range) {
+  return (Math.random() - 0.5) * range;
+}
+
+function comeHome() {
+  for (var key in active) {
+    active[key] = false;
+  }
+  active.eat3d = true;
+
+  camera.position.z = 600;
+  for (var i = 0; i < strangers.length; i++) {
+    strangers[i].resetMeshes(true, false);
+    strangers[i].mode = 'still';
+  }
+
+  for (var i = 0; i < onslaught.length; i++) {
+    onslaught[i].resetMeshes(true, false);
+    onslaught[i].mode = 'still';
+  }
+
+  setTimeout(function() {
+    active.zoomingOut = true;
+  }, 13666);
+}
+
 function render() {
   camera.position.x += (mouseX - camera.position.x) * 0.05;
   camera.position.y += (-mouseY - camera.position.y) * 0.05;
   camera.lookAt(scene.position);
+
+  if (active.shaking) {
+    camera.position.x += shakeLevel(shakeRange.x);
+    camera.position.y += shakeLevel(shakeRange.y);
+    camera.position.z += shakeLevel(shakeRange.z);
+  } else if (active.zoomingOut) {
+    camera.position.z += 1;
+  }
 
   eat3d.render();
 

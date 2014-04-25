@@ -25,6 +25,7 @@ $(function() {
   };
 
   var AUDIO_LENGTH = 300000;
+  var INV_TIME = 80000;
 
   for (var i = 0; i < vids.length; i++)
     vids[i].addEventListener('canplaythrough', mediaReady);
@@ -120,12 +121,27 @@ $(function() {
     eat.play();
 
     ghostLooper();
+    setTimeout(ghostInverter, INV_TIME);
   }
 
   function ghostLooper() {
-    var o = Math.random() * 0.4 + 0.02;
+    var p = Math.random();
+    if (p < 0.9)
+      var o = Math.random() * 0.23 + 0.02;
+    else
+      var o = Math.random() * 0.66 + 0.02;
+
     $eat.css('opacity', o);
-    setTimeout(ghostLooper, kt.randInt(1000, 20));
+    setTimeout(ghostLooper, kt.randInt(400, 20));
+  }
+
+  function ghostInverter() {
+    var i = kt.randInt(100, 70);
+    kt.invert($eat, i);
+    setTimeout(function() {
+      kt.invert($eat, 0);
+      setTimeout(ghostInverter, kt.randInt(1200, 600));
+    }, kt.randInt(1200, 200));
   }
 
 });

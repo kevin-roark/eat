@@ -10,8 +10,6 @@ module.exports.move = function (mono, x, y, z, rotate, callback) {
   var yv = y / length * 10;
   var zv = z / length * 10;
 
-  console.log(xv + ' ' +  yv + ' ' +  zv);
-
   mono.structureVel(xv, yv, zv);
 
   if (rotate) {
