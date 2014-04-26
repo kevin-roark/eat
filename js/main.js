@@ -107,7 +107,7 @@ $(function() {
 
   function soundControl() {
     for (var i = 0; i < vids.length; i++)
-      vids[i].muted = false;
+      vids[i].muted = true;
   }
 
   function speed(vid, rate) {
