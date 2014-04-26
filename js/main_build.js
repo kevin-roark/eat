@@ -24,7 +24,7 @@ var START_DECAY = 13666;
 var STRANGER_1 = 26666;
 var STRANGER_2 = 46666;
 var LIGHT_SHIFT = 42000;
-var ONSLAUGHT = 5000;
+var ONSLAUGHT = 65000;
 var BREAKDOWN = 100000;
 var SHAKING = 80000;
 var COME_HOME = 180000;
@@ -91,7 +91,7 @@ function init(restarting) {
     velocity: 0.05,
     initX: 200,
     initY: 0,
-    initZ: 60,
+    initZ: 35,
     randZ: true,
     zsize: 30,
     mode: 'still'
@@ -183,9 +183,9 @@ function deconstruct(monolith, maxT, diffSpeeds, callback) {
 }
 
 function moveMonolith(mono, callback) {
-  var x = (Math.random() * 1000) - 500;
-  var y = (Math.random() * 800) - 400;
-  var z = (Math.random() * 400) - 200;
+  var x = (Math.random() * 700) - 350;
+  var y = (Math.random() * 600) - 300;
+  var z = (Math.random() * 200) - 100;
 
   mover.move(mono, x, y, z, false, function() {
     callback();
@@ -275,7 +275,7 @@ function addStranger2() {
 
   stranger2.interval = setInterval(function() {
     stranger2.resetMeshes(true, false);
-  }, 10000);
+  }, 20000);
 }
 
 function performOnslaught() {
@@ -285,13 +285,11 @@ function performOnslaught() {
   function doIt() {
     var w = kt.randInt(120, 40);
     var h = kt.randInt(90, 30);
-    var g = kt.randInt(7, 2);
+    var g = kt.randInt(9, 2);
     if (Math.random() < 0.5)
       var bd = true;
     else
       var bd = false;
-
-    console.log(bd);
 
     var os = new Monolith('eat', {
       xgrid: g,
@@ -429,12 +427,15 @@ function comeHome() {
 
   for (var i = 0; i < onslaught.length; i++) {
     onslaught[i].resetMeshes(true, false);
-    onslaught[i].mode = 'still';
+    onslaught[i].mode = 'moving';
+    onslaught[i].randVel = true;
+    onslaught[i].velocity = 0.01;
+    onslaught[i].setVelocity();
   }
 
   setTimeout(function() {
     active.zoomingOut = true;
-  }, 13666);
+  }, 8666);
 }
 
 function collapse() {
@@ -454,8 +455,26 @@ function collapse() {
 
   for (var i = 0; i < onslaught.length; i++) {
     onslaught[i].mode = 'moving';
+    onslaught[i].velocity = 0.05;
+    onslaught[i].randVel = false;
     onslaught[i].setVelocity();
   }
+
+  clearInterval(breakdownInterval);
+
+  setInterval(function() {
+    eat3d.mode = 'moving';
+    stranger1.mode = 'moving';
+    stranger2.mode = 'moving';
+    eat3d.setVelocity();
+    stranger1.setVelocity();
+    stranger2.setVelocity();
+
+    for (var i = 0; i < onslaught.length; i++) {
+      onslaught[i].setVelocity();
+      onslaught[i].mode = 'moving';
+    }
+  }, 6666);
 }
 
 function render() {
@@ -1132,6 +1151,8 @@ $(function() {
       for (var key in active)
         active[key] = false;
 
+      location.reload();
+
       start(true);
     }
 
@@ -1168,7 +1189,7 @@ $(function() {
 
   function soundControl() {
     for (var i = 0; i < vids.length; i++)
-      vids[i].muted = true;
+      vids[i].muted = false;
   }
 
   function speed(vid, rate) {
@@ -1241,8 +1262,7 @@ function Monolith(vid, options, renderer, scene) {
 
   this.video = document.getElementById(vid);
   this.$video = $(this.video);
-  this.video.muted = true;
-
+  
   this.materials = [];
   this.meshes = [];
 

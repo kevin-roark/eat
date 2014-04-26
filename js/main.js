@@ -69,6 +69,8 @@ $(function() {
       for (var key in active)
         active[key] = false;
 
+      location.reload();
+
       start(true);
     }
 
@@ -105,7 +107,7 @@ $(function() {
 
   function soundControl() {
     for (var i = 0; i < vids.length; i++)
-      vids[i].muted = true;
+      vids[i].muted = false;
   }
 
   function speed(vid, rate) {

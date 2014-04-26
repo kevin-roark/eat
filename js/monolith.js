@@ -27,8 +27,7 @@ function Monolith(vid, options, renderer, scene) {
 
   this.video = document.getElementById(vid);
   this.$video = $(this.video);
-  this.video.muted = true;
-
+  
   this.materials = [];
   this.meshes = [];
 
