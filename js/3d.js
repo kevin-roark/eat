@@ -27,6 +27,7 @@ var ONSLAUGHT = 65000;
 var BREAKDOWN = 100000;
 var SHAKING = 80000;
 var COME_HOME = 180000;
+var COLLAPSE = 230000;
 
 var active = {
   eat3d: false,
@@ -35,17 +36,22 @@ var active = {
 };
 var breakdownInterval;
 
-
 module.exports.init = init;
 
 module.exports.clear = function() {
-  scene.clear();
+  //scene.clear();
+  for (var key in active) {
+    active[key] = false;
+  }
+  camera.position.z = 600;
 }
 
-function init() {
+function init(restarting) {
 
-  container = document.createElement('div'); // a place to hold my 3d
-  document.body.appendChild(container);
+  if (!restarting) {
+    container = document.createElement('div'); // a place to hold my 3d
+    document.body.appendChild(container);
+  }
 
   camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 10000);
   camera.position.z = 600;
@@ -126,6 +132,7 @@ function init() {
   setTimeout(breakdown, BREAKDOWN);
   setTimeout(startShaking, SHAKING);
   setTimeout(comeHome, COME_HOME);
+  setTimeout(collapse, COLLAPSE);
 
   animate();
   return true;
@@ -188,7 +195,9 @@ function startDecay() {
 
   function decomposeEat() {
     deconstruct(eat3d, eat3d.maxT, true, function() {
-      eat3d.resetMeshes(true, false);
+      if (active.eat3d) eat3d.resetMeshes(true, false);
+      else eat3d.mode = 'moving';
+
       if (active.eat3d) {
         setTimeout(decomposeEat, kt.randInt(eat3d.maxWait, eat3d.maxWait / 3.5));
         eat3d.maxWait = eat3d.maxWait - 150;
@@ -215,14 +224,14 @@ function addStranger1() {
 
   function makeStrange() {
     var p = Math.random();
-    if (p < 0.1 && !decomposing) {
+    if (p < 0.1 && !decomposing && active.stranger1) {
       decomposing = true;
       deconstruct(stranger1, 3000, true, function() {
         decomposing = false;
       });
     }
 
-    if (!colored && p < 0.65) {
+    if (!colored && p < 0.69) {
       stranger1.setColors();
       colored = true;
     } else if (colored) {
@@ -276,7 +285,11 @@ function performOnslaught() {
     var w = kt.randInt(120, 40);
     var h = kt.randInt(90, 30);
     var g = kt.randInt(7, 2);
-    var bd = (Math.random() < 0.5)? true : false;
+    if (Math.random() < 0.5)
+      var bd = true;
+    else
+      var bd = false;
+
     var os = new Monolith('eat', {
       xgrid: g,
       ygrid: g,
@@ -296,7 +309,7 @@ function performOnslaught() {
     onslaught.push(os);
 
     if (active.onslaught && onslaught.length <= 16)
-      setTimeout(doIt, kt.randInt(6000, 1800));
+      setTimeout(doIt, kt.randInt(4600, 1200));
   }
 }
 
@@ -419,6 +432,27 @@ function comeHome() {
   setTimeout(function() {
     active.zoomingOut = true;
   }, 13666);
+}
+
+function collapse() {
+  for (var key in active) {
+    active[key] = true;
+  }
+  active.eat3d = false;
+  active.shaking = false;
+
+  eat3d.mode = 'moving';
+  stranger1.mode = 'moving';
+  stranger2.mode = 'moving';
+
+  eat3d.setVelocity();
+  stranger1.setVelocity();
+  stranger2.setVelocity();
+
+  for (var i = 0; i < onslaught.length; i++) {
+    onslaught[i].mode = 'moving';
+    onslaught[i].setVelocity();
+  }
 }
 
 function render() {

@@ -37,11 +37,11 @@ $(function() {
     }
   }
 
-  function start() {
+  function start(restarting) {
 
     //audio.play();
 
-    threeD.init();
+    threeD.init(restarting);
     startVids();
 
     setTimeout(hideFooter, 1000);
@@ -58,6 +58,8 @@ $(function() {
 
     function restart() {
 
+      console.log('byeeee');
+
       //audio.currentTime = 0;
       for (var i = 0; i < vids.length; i++)
         vids[i].currentTime = 0;
@@ -67,7 +69,7 @@ $(function() {
       for (var key in active)
         active[key] = false;
 
-      start();
+      start(true);
     }
 
     function showFooter() {
