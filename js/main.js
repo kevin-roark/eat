@@ -24,7 +24,7 @@ $(function() {
     eat: false
   };
 
-  var AUDIO_LENGTH = 300000;
+  var AUDIO_LENGTH = 630000; // 7.1 minutes of real life
   var INV_TIME = 80000;
 
   for (var i = 0; i < vids.length; i++)
@@ -48,6 +48,7 @@ $(function() {
     setTimeout(endgame, AUDIO_LENGTH);
 
     soundControl();
+    speedControl();
 
     setInterval(function() {
       $('.debug-timer').html(vids[0].currentTime);
@@ -108,6 +109,12 @@ $(function() {
   function soundControl() {
     for (var i = 0; i < vids.length; i++)
       vids[i].muted = true;
+  }
+
+  function speedControl() {
+    setTimeout(function() {
+      speed(vids[0], 0.9);
+    }, 57500); // we stop sampling video at 57.5 seconds
   }
 
   function speed(vid, rate) {

@@ -26,8 +26,8 @@ var LIGHT_SHIFT = 42000;
 var ONSLAUGHT = 65000;
 var BREAKDOWN = 100000;
 var SHAKING = 80000;
-var COME_HOME = 180000;
-var COLLAPSE = 230000;
+var COME_HOME = 205500; // 205.5 seconds
+var COLLAPSE = 240000;
 
 var active = {
   eat3d: false,
@@ -360,10 +360,11 @@ function breakdown() {
     renderer.setClearColor(0xffffff);
     setTimeout(function() {
       renderer.setClearColor(0x000000);
-      setTimeout(flash, kt.randInt(300, 30));
+      if (active.flash) setTimeout(flash, kt.randInt(300, 30));
     }, kt.randInt(300, 30));
   }
 
+  active.flash = true;
   flash();
 
   breakdownInterval = setInterval(function() {
@@ -395,17 +396,16 @@ function startShaking() {
   setLevels();
 
   function setLevels() {
-    shakeRange.x += 0.33;
-    shakeRange.y += 0.33;
-    shakeRange.z += 0.33;
+    shakeRange.x += 0.43;
+    shakeRange.y += 0.43;
+    shakeRange.z += 0.43;
 
-    shakeRange.x = Math.min(shakeRange.x, 30);
-    shakeRange.y = Math.min(shakeRange.y, 30);
-    shakeRange.z = Math.min(shakeRange.z, 30);
+    shakeRange.x = Math.min(shakeRange.x, 35);
+    shakeRange.y = Math.min(shakeRange.y, 35);
+    shakeRange.z = Math.min(shakeRange.z, 35);
 
     setTimeout(setLevels, kt.randInt(2000, 1000));
   }
-
 }
 
 function shakeLevel(range) {
@@ -417,6 +417,7 @@ function comeHome() {
     active[key] = false;
   }
   active.eat3d = true;
+  active.flash = true;
 
   camera.position.z = 600;
   for (var i = 0; i < strangers.length; i++) {
@@ -434,7 +435,7 @@ function comeHome() {
 
   setTimeout(function() {
     active.zoomingOut = true;
-  }, 8666);
+  }, 4666);
 }
 
 function collapse() {
@@ -443,6 +444,7 @@ function collapse() {
   }
   active.eat3d = false;
   active.shaking = false;
+  active.flash = false;
 
   eat3d.mode = 'moving';
   stranger1.mode = 'moving';
@@ -451,6 +453,8 @@ function collapse() {
   eat3d.setVelocity();
   stranger1.setVelocity();
   stranger2.setVelocity();
+
+  camera.position.z = 800;
 
   for (var i = 0; i < onslaught.length; i++) {
     onslaught[i].mode = 'moving';
@@ -486,7 +490,7 @@ function render() {
     camera.position.y += shakeLevel(shakeRange.y);
     camera.position.z += shakeLevel(shakeRange.z);
   } else if (active.zoomingOut) {
-    camera.position.z += 1;
+    camera.position.z += Math.max(1, camera.position.z / 100);
   }
 
   eat3d.render();
