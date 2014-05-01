@@ -446,6 +446,7 @@ function collapse() {
   active.eat3d = false;
   active.shaking = false;
   active.flash = false;
+  active.zoomingOut = false;
 
   eat3d.mode = 'moving';
   stranger1.mode = 'moving';
@@ -491,7 +492,7 @@ function render() {
     camera.position.y += shakeLevel(shakeRange.y);
     camera.position.z += shakeLevel(shakeRange.z);
   } else if (active.zoomingOut) {
-    camera.position.z += Math.max(1, camera.position.z / 100);
+    camera.position.z += Math.max(1, camera.position.z / 400);
   }
 
   eat3d.render();
