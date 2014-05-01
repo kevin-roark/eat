@@ -1104,7 +1104,7 @@ $(function() {
 
   /** BACK TO MEDIA */
 
-  var numMedia = vids.length + 1; // vids + audio
+  var numMedia = vids.length + 1 + 1; // vids + audio + s key
   var mediasReady = 0;
 
   var active = {
@@ -1117,6 +1117,12 @@ $(function() {
   for (var i = 0; i < vids.length; i++)
     vids[i].addEventListener('canplaythrough', mediaReady);
   audio.addEventListener('canplaythrough', mediaReady);
+
+  $(document).keypress(function(ev) {
+    if (ev.keyCode == 115) { // the 's' key
+      mediaReady();
+    }
+  });
 
   function mediaReady() {
     mediasReady++;
@@ -1138,15 +1144,11 @@ $(function() {
 
     startVids();
 
-    setTimeout(hideFooter, 1000);
+    setTimeout(hideFooter, 100);
     setTimeout(endgame, AUDIO_LENGTH);
 
     soundControl();
     speedControl();
-
-    //setInterval(function() {
-    //  $('.debug-timer').html(vids[0].currentTime);
-    //}, 200);
   }
 
   function endgame() {
@@ -1174,9 +1176,6 @@ $(function() {
       $('.footer').unbind('mouseenter');
       $('.footer').unbind('mouseleave');
     }
-
-    showFooter();
-    setTimeout(restart, 5000);
   }
 
   function hideFooter() {
