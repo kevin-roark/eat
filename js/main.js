@@ -5,8 +5,8 @@ $(function() {
   var eat = document.querySelector('#eat');
   var $eat = $(eat);
 
-  //var audio = document.querySelector('#audio');
-  //var $aud = $(audio);
+  var audio = document.querySelector('#audio');
+  var $aud = $(audio);
 
   var vids = [eat];
   var $vids = [$eat];
@@ -17,7 +17,7 @@ $(function() {
 
   /** BACK TO MEDIA */
 
-  var numMedia = vids.length; // number of things to load
+  var numMedia = vids.length + 1; // vids + audio
   var mediasReady = 0;
 
   var active = {
@@ -29,6 +29,7 @@ $(function() {
 
   for (var i = 0; i < vids.length; i++)
     vids[i].addEventListener('canplaythrough', mediaReady);
+  audio.addEventListener('canplaythrough', mediaReady);
 
   function mediaReady() {
     mediasReady++;
@@ -39,7 +40,7 @@ $(function() {
 
   function start(restarting) {
 
-    //audio.play();
+    audio.play();
 
     if (!threeD.init(restarting)) {
       $('.fallback').show();
@@ -64,7 +65,7 @@ $(function() {
   function endgame() {
 
     function restart() {
-      //audio.currentTime = 0;
+      audio.currentTime = 0;
       for (var i = 0; i < vids.length; i++)
         vids[i].currentTime = 0;
 

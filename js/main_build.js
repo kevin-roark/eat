@@ -397,13 +397,13 @@ function startShaking() {
   setLevels();
 
   function setLevels() {
-    shakeRange.x += 0.43;
-    shakeRange.y += 0.43;
-    shakeRange.z += 0.43;
+    shakeRange.x += 0.34;
+    shakeRange.y += 0.34;
+    shakeRange.z += 0.34;
 
-    shakeRange.x = Math.min(shakeRange.x, 35);
-    shakeRange.y = Math.min(shakeRange.y, 35);
-    shakeRange.z = Math.min(shakeRange.z, 35);
+    shakeRange.x = Math.min(shakeRange.x, 30);
+    shakeRange.y = Math.min(shakeRange.y, 30);
+    shakeRange.z = Math.min(shakeRange.z, 30);
 
     setTimeout(setLevels, kt.randInt(2000, 1000));
   }
@@ -456,7 +456,7 @@ function collapse() {
   stranger1.setVelocity();
   stranger2.setVelocity();
 
-  camera.position.z = 800;
+  camera.position.z -= 100;
 
   for (var i = 0; i < onslaught.length; i++) {
     onslaught[i].mode = 'moving';
@@ -479,7 +479,7 @@ function collapse() {
       onslaught[i].setVelocity();
       onslaught[i].mode = 'moving';
     }
-  }, 6666);
+  }, 26666);
 }
 
 function render() {
@@ -1092,8 +1092,8 @@ $(function() {
   var eat = document.querySelector('#eat');
   var $eat = $(eat);
 
-  //var audio = document.querySelector('#audio');
-  //var $aud = $(audio);
+  var audio = document.querySelector('#audio');
+  var $aud = $(audio);
 
   var vids = [eat];
   var $vids = [$eat];
@@ -1104,7 +1104,7 @@ $(function() {
 
   /** BACK TO MEDIA */
 
-  var numMedia = vids.length; // number of things to load
+  var numMedia = vids.length + 1; // vids + audio
   var mediasReady = 0;
 
   var active = {
@@ -1116,6 +1116,7 @@ $(function() {
 
   for (var i = 0; i < vids.length; i++)
     vids[i].addEventListener('canplaythrough', mediaReady);
+  audio.addEventListener('canplaythrough', mediaReady);
 
   function mediaReady() {
     mediasReady++;
@@ -1126,7 +1127,7 @@ $(function() {
 
   function start(restarting) {
 
-    //audio.play();
+    audio.play();
 
     if (!threeD.init(restarting)) {
       $('.fallback').show();
@@ -1151,7 +1152,7 @@ $(function() {
   function endgame() {
 
     function restart() {
-      //audio.currentTime = 0;
+      audio.currentTime = 0;
       for (var i = 0; i < vids.length; i++)
         vids[i].currentTime = 0;
 

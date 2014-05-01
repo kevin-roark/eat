@@ -396,13 +396,13 @@ function startShaking() {
   setLevels();
 
   function setLevels() {
-    shakeRange.x += 0.43;
-    shakeRange.y += 0.43;
-    shakeRange.z += 0.43;
+    shakeRange.x += 0.34;
+    shakeRange.y += 0.34;
+    shakeRange.z += 0.34;
 
-    shakeRange.x = Math.min(shakeRange.x, 35);
-    shakeRange.y = Math.min(shakeRange.y, 35);
-    shakeRange.z = Math.min(shakeRange.z, 35);
+    shakeRange.x = Math.min(shakeRange.x, 30);
+    shakeRange.y = Math.min(shakeRange.y, 30);
+    shakeRange.z = Math.min(shakeRange.z, 30);
 
     setTimeout(setLevels, kt.randInt(2000, 1000));
   }
@@ -455,7 +455,7 @@ function collapse() {
   stranger1.setVelocity();
   stranger2.setVelocity();
 
-  camera.position.z = 800;
+  camera.position.z -= 100;
 
   for (var i = 0; i < onslaught.length; i++) {
     onslaught[i].mode = 'moving';
@@ -478,7 +478,7 @@ function collapse() {
       onslaught[i].setVelocity();
       onslaught[i].mode = 'moving';
     }
-  }, 6666);
+  }, 26666);
 }
 
 function render() {
