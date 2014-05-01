@@ -51,6 +51,19 @@ body {
   font-size: 44px;
 }
 
+.fallback {
+  width: 100%;
+  position: absolute;
+  bottom: 20%;
+  z-index: 2;
+  padding: 1em 0em;
+  background-color: rgb(30, 30, 30);
+  color: yellow;
+  text-align: center;
+  font-size: 200%;
+  display: none;
+}
+
 .footer {
   width: 100%;
   position: absolute;

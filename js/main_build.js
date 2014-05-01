@@ -1128,7 +1128,13 @@ $(function() {
 
     //audio.play();
 
-    threeD.init(restarting);
+    if (!threeD.init(restarting)) {
+      $('.fallback').show();
+      setTimeout(function() {
+        $('.fallback').fadeOut();
+      }, 5000);
+    }
+
     startVids();
 
     setTimeout(hideFooter, 1000);
@@ -1137,17 +1143,14 @@ $(function() {
     soundControl();
     speedControl();
 
-    setInterval(function() {
-      $('.debug-timer').html(vids[0].currentTime);
-    }, 200);
+    //setInterval(function() {
+    //  $('.debug-timer').html(vids[0].currentTime);
+    //}, 200);
   }
 
   function endgame() {
 
     function restart() {
-
-      console.log('byeeee');
-
       //audio.currentTime = 0;
       for (var i = 0; i < vids.length; i++)
         vids[i].currentTime = 0;
