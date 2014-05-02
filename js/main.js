@@ -24,7 +24,7 @@ $(function() {
     eat: false
   };
 
-  var AUDIO_LENGTH = 630000; // 7.1 minutes of real life
+  var AUDIO_LENGTH = 630000 * 2; // 7.1 minutes of real life + 7.1 minutes of loop
   var INV_TIME = 80000;
 
   for (var i = 0; i < vids.length; i++)
